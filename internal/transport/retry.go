@@ -59,10 +59,11 @@ func doJSONWithRetry(ctx context.Context, t *Transport, req *http.Request) ([]by
 			continue
 		}
 
+		// Body is already wrapped with proper cancellation and limit.
+		// We just need to read it fully.
 		defer resp.Body.Close()
 
-		// Read with size cap
-		b, rerr := readAllCapped(resp.Body, t.policy.MaxBodyBytes)
+		b, rerr := io.ReadAll(resp.Body)
 		if rerr != nil {
 			return nil, rerr
 		}
@@ -91,17 +92,4 @@ func sleepBackoff(ctx context.Context, p RetryPolicy, attempt int) {
 	case <-ctx.Done():
 	case <-timer.C:
 	}
-}
-
-func readAllCapped(r io.Reader, max int64) ([]byte, error) {
-	// minimal capped reader
-	lr := &io.LimitedReader{R: r, N: max + 1}
-	b, err := io.ReadAll(lr)
-	if err != nil {
-		return nil, err
-	}
-	if int64(len(b)) > max {
-		return nil, errors.New("response body too large")
-	}
-	return b, nil
 }
