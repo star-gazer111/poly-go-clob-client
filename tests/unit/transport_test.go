@@ -17,7 +17,7 @@ import (
 func TestBodyCapEnforcement(t *testing.T) {
 	// 1. Setup server sending 1024 bytes
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(strings.Repeat("a", 1024)))
+		_, _ = w.Write([]byte(strings.Repeat("a", 1024)))
 	}))
 	defer ts.Close()
 
