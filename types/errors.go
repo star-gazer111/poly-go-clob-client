@@ -11,6 +11,8 @@ import (
 // kind matches the Rust enum Kind
 type Kind string
 
+var ErrBodyTooLarge = errors.New("response body too large")
+
 const (
 	KindStatus          Kind = "status"
 	KindValidation      Kind = "validation"
