@@ -44,7 +44,7 @@ func Classify(status int, body []byte) error{
 	}
 
 	var parsed map[string]interface{}
-	json.Unmarshal(body, &parsed)
+	_ = json.Unmarshal(body, &parsed)
 
 	message := ""
 	code := ""
