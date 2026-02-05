@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 	"time"
-	"logger"
+	"log"
 )
 
 type RetryPolicy struct {
@@ -63,7 +63,7 @@ func doJSONWithRetry(ctx context.Context, t *Transport, req *http.Request) ([]by
 defer func() {
 	if err := resp.Body.Close(); err != nil {
 		// best-effort; close errors are rarely actionable but can be logged
-		logger.Printf("resp body close: %v", err)
+		log.Printf("resp body close: %v", err)
 	}
 }()
 
