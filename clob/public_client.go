@@ -150,7 +150,7 @@ func (c *PublicClient) OrderBook(ctx context.Context, req *types.OrderBookSummar
 	q.Add("side", fmt.Sprintf("%d", req.Side))
 
 	// Construct URL with query params
-	u := c.endpoint("/order_book_summary")
+	u := c.endpoint("/book")
 	if len(q) > 0 {
 		u = u + "?" + q.Encode()
 	}
@@ -166,4 +166,26 @@ func (c *PublicClient) OrderBook(ctx context.Context, req *types.OrderBookSummar
 	}
 
 	return &resp, nil
+}
+
+func (c *PublicClient) OrderBooks(ctx context.Context, req []types.OrderBookSummaryRequest) ([]*types.OrderBookSummaryResponse, error) {
+	u := c.endpoint("/books")
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodPost, u, nil, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var resp []*types.OrderBookSummaryResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
