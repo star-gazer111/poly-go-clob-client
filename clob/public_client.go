@@ -3,6 +3,7 @@ package clob
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,7 +21,7 @@ type PublicClient struct {
 // PublicClientOption configures the PublicClient
 type PublicClientOption func(*PublicClient)
 
-// WithTransport sets a custom transport 
+// WithTransport sets a custom transport
 func WithTransport(t *transport.Transport) PublicClientOption {
 	return func(c *PublicClient) {
 		if t != nil {
@@ -89,7 +90,7 @@ func validateBaseURL(baseURL string, requireHTTPS bool) (*url.URL, error) {
 	}
 
 	// we normalize: remove trailing slash path unless user has custom base path
-	// and we keep any non-root path if present 
+	// and we keep any non-root path if present
 	if u.Path == "/" {
 		u.Path = ""
 	}
@@ -138,4 +139,31 @@ func (c *PublicClient) Ping(ctx context.Context) (*PingResponse, error) {
 	resp.Raw = strings.TrimSpace(string(b))
 	resp.OK = resp.Raw != ""
 	return resp, nil
+}
+
+func (c *PublicClient) OrderBook(ctx context.Context, req *types.OrderBookSummaryRequest) (*types.OrderBookSummaryResponse, error) {
+	q := url.Values{}
+	q.Add("token_id", fmt.Sprintf("%d", req.TokenId))
+
+	// Side is int, so we send as "0" (Buy) or "1" (Sell)
+
+	q.Add("side", fmt.Sprintf("%d", req.Side))
+
+	// Construct URL with query params
+	u := c.endpoint("/order_book_summary")
+	if len(q) > 0 {
+		u = u + "?" + q.Encode()
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.OrderBookSummaryResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
 }
