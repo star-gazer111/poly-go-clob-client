@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"time"
+	"logger"
 )
 
 type RetryPolicy struct {
@@ -59,7 +60,13 @@ func doJSONWithRetry(ctx context.Context, t *Transport, req *http.Request) ([]by
 			continue
 		}
 
-		defer resp.Body.Close()
+defer func() {
+	if err := resp.Body.Close(); err != nil {
+		// best-effort; close errors are rarely actionable but can be logged
+		logger.Printf("resp body close: %v", err)
+	}
+}()
+
 
 		// Read with size cap
 		b, rerr := readAllCapped(resp.Body, t.policy.MaxBodyBytes)
