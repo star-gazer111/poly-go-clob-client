@@ -1,8 +1,8 @@
 package types
 
 type OrderBookSummaryRequest struct {
-	TokenId uint `json:"token_id"`
-	Side    Side `json:"side"`
+	TokenId string `json:"token_id"`
+	Side    Side   `json:"side,omitempty"`
 }
 
 // MarketRequest represents a request to fetch a market by condition ID.
