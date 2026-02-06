@@ -3,6 +3,7 @@ package clob
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,7 +21,7 @@ type PublicClient struct {
 // PublicClientOption configures the PublicClient
 type PublicClientOption func(*PublicClient)
 
-// WithTransport sets a custom transport 
+// WithTransport sets a custom transport
 func WithTransport(t *transport.Transport) PublicClientOption {
 	return func(c *PublicClient) {
 		if t != nil {
@@ -89,7 +90,7 @@ func validateBaseURL(baseURL string, requireHTTPS bool) (*url.URL, error) {
 	}
 
 	// we normalize: remove trailing slash path unless user has custom base path
-	// and we keep any non-root path if present 
+	// and we keep any non-root path if present
 	if u.Path == "/" {
 		u.Path = ""
 	}
@@ -118,12 +119,12 @@ type PingResponse struct {
 	Raw     string `json:"-"`
 }
 
-// ping calls a simple public endpoint (e.g. /ping) and returns a parsed response
-// if the server returns JSON we parse it otherwise we return raw string
+// Ping calls the root endpoint as a health check and returns a parsed response.
+// If the server returns JSON we parse it, otherwise we return raw string.
 //
-// this is meant as a boring smoke-test endpoint for transport + error typing
+// This is meant as a smoke-test endpoint for transport + error typing.
 func (c *PublicClient) Ping(ctx context.Context) (*PingResponse, error) {
-	b, err := c.transport.DoJSON(ctx, http.MethodGet, c.endpoint("/ping"), nil, nil)
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, c.endpoint("/"), nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -138,4 +139,153 @@ func (c *PublicClient) Ping(ctx context.Context) (*PingResponse, error) {
 	resp.Raw = strings.TrimSpace(string(b))
 	resp.OK = resp.Raw != ""
 	return resp, nil
+}
+
+func (c *PublicClient) OrderBook(ctx context.Context, req *types.OrderBookSummaryRequest) (*types.OrderBookSummaryResponse, error) {
+	q := url.Values{}
+	q.Add("token_id", req.TokenId)
+
+	// Side is int, so we send as "0" (Buy) or "1" (Sell)
+
+	q.Add("side", fmt.Sprintf("%d", req.Side))
+
+	// Construct URL with query params
+	u := c.endpoint("/book")
+	if len(q) > 0 {
+		u = u + "?" + q.Encode()
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.OrderBookSummaryResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (c *PublicClient) OrderBooks(ctx context.Context, req []types.OrderBookSummaryRequest) ([]*types.OrderBookSummaryResponse, error) {
+	u := c.endpoint("/books")
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodPost, u, nil, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var resp []*types.OrderBookSummaryResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (c *PublicClient) Market(ctx context.Context, req *types.MarketRequest) (*types.MarketResponse, error) {
+	u := c.endpoint(fmt.Sprintf("/markets/%s", req.ConditionID))
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.MarketResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// Markets fetches a paginated list of all markets.
+// Pass an empty string for nextCursor to get the first page.
+func (c *PublicClient) Markets(ctx context.Context, nextCursor string) (*types.MarketsPage, error) {
+	u := c.endpoint("/markets")
+	if nextCursor != "" {
+		u = u + "?next_cursor=" + url.QueryEscape(nextCursor)
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.MarketsPage
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// SimplifiedMarkets fetches a paginated list of simplified markets.
+// Pass an empty string for nextCursor to get the first page.
+func (c *PublicClient) SimplifiedMarkets(ctx context.Context, nextCursor string) (*types.SimplifiedMarketsPage, error) {
+	u := c.endpoint("/simplified-markets")
+	if nextCursor != "" {
+		u = u + "?next_cursor=" + url.QueryEscape(nextCursor)
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.SimplifiedMarketsPage
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// SamplingMarkets fetches a paginated list of sampling markets.
+// Pass an empty string for nextCursor to get the first page.
+func (c *PublicClient) SamplingMarkets(ctx context.Context, nextCursor string) (*types.MarketsPage, error) {
+	u := c.endpoint("/sampling-markets")
+	if nextCursor != "" {
+		u = u + "?next_cursor=" + url.QueryEscape(nextCursor)
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.MarketsPage
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// SamplingSimplifiedMarkets fetches a paginated list of sampling simplified markets.
+// Pass an empty string for nextCursor to get the first page.
+func (c *PublicClient) SamplingSimplifiedMarkets(ctx context.Context, nextCursor string) (*types.SimplifiedMarketsPage, error) {
+	u := c.endpoint("/sampling-simplified-markets")
+	if nextCursor != "" {
+		u = u + "?next_cursor=" + url.QueryEscape(nextCursor)
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.SimplifiedMarketsPage
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
 }
