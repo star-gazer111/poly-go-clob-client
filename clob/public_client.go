@@ -268,3 +268,24 @@ func (c *PublicClient) SamplingMarkets(ctx context.Context, nextCursor string) (
 
 	return &resp, nil
 }
+
+// SamplingSimplifiedMarkets fetches a paginated list of sampling simplified markets.
+// Pass an empty string for nextCursor to get the first page.
+func (c *PublicClient) SamplingSimplifiedMarkets(ctx context.Context, nextCursor string) (*types.SimplifiedMarketsPage, error) {
+	u := c.endpoint("/sampling-simplified-markets")
+	if nextCursor != "" {
+		u = u + "?next_cursor=" + url.QueryEscape(nextCursor)
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.SimplifiedMarketsPage
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
