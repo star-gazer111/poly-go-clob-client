@@ -76,6 +76,26 @@ type MarketsPage struct {
 	Count uint64 `json:"count"`
 }
 
+// SimplifiedMarketResponse represents a simplified market from the CLOB API.
+type SimplifiedMarketResponse struct {
+	// ConditionID is the market condition ID (unique market identifier).
+	ConditionID     *string `json:"condition_id,omitempty"`
+	Tokens          []Token `json:"tokens"`
+	Rewards         Rewards `json:"rewards"`
+	Active          bool    `json:"active"`
+	Closed          bool    `json:"closed"`
+	Archived        bool    `json:"archived"`
+	AcceptingOrders bool    `json:"accepting_orders"`
+}
+
+// SimplifiedMarketsPage represents a paginated list of simplified markets.
+type SimplifiedMarketsPage struct {
+	Data       []SimplifiedMarketResponse `json:"data"`
+	NextCursor string                     `json:"next_cursor"`
+	Limit      uint64                     `json:"limit"`
+	Count      uint64                     `json:"count"`
+}
+
 // OrderSummary represents a single price level in the order book.
 type OrderSummary struct {
 	Price float64 `json:"price"`
