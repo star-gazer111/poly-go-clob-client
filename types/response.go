@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -8,17 +9,17 @@ import (
 
 // Token represents a market token.
 type Token struct {
-	TokenID string `json:"token_id"`
-	Outcome string `json:"outcome"`
-	Price   string `json:"price,omitempty"`
-	Winner  bool   `json:"winner"`
+	TokenID string      `json:"token_id"`
+	Outcome string      `json:"outcome"`
+	Price   json.Number `json:"price,omitempty"`
+	Winner  bool        `json:"winner"`
 }
 
 // Rewards represents market rewards configuration.
 type Rewards struct {
 	Rates     []RewardRate `json:"rates"`
-	MinSize   string       `json:"min_size"`
-	MaxSpread string       `json:"max_spread"`
+	MinSize   json.Number  `json:"min_size"`
+	MaxSpread json.Number  `json:"max_spread"`
 }
 
 // RewardRate represents a reward rate entry.
@@ -98,20 +99,20 @@ type SimplifiedMarketsPage struct {
 
 // OrderSummary represents a single price level in the order book.
 type OrderSummary struct {
-	Price float64 `json:"price"`
-	Size  float64 `json:"size"`
+	Price json.Number `json:"price"`
+	Size  json.Number `json:"size"`
 }
 
 // OrderBookSummaryResponse represents the response from the order book summary endpoint.
 type OrderBookSummaryResponse struct {
 	Market         string         `json:"market"`
 	AssetID        string         `json:"asset_id"`
-	Timestamp      time.Time      `json:"timestamp"`
+	Timestamp      json.Number    `json:"timestamp"` // Unix timestamp in milliseconds (can be string or number)
 	Hash           *string        `json:"hash,omitempty"`
 	Bids           []OrderSummary `json:"bids"`
 	Asks           []OrderSummary `json:"asks"`
-	MinOrderSize   float64        `json:"min_order_size"`
+	MinOrderSize   json.Number    `json:"min_order_size"`
 	NegRisk        bool           `json:"neg_risk"`
-	TickSize       float64        `json:"tick_size"`
-	LastTradePrice *float64       `json:"last_trade_price,omitempty"`
+	TickSize       json.Number    `json:"tick_size"`
+	LastTradePrice *json.Number   `json:"last_trade_price,omitempty"`
 }

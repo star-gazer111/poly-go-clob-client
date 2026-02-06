@@ -119,12 +119,12 @@ type PingResponse struct {
 	Raw     string `json:"-"`
 }
 
-// ping calls a simple public endpoint (e.g. /ping) and returns a parsed response
-// if the server returns JSON we parse it otherwise we return raw string
+// Ping calls the root endpoint as a health check and returns a parsed response.
+// If the server returns JSON we parse it, otherwise we return raw string.
 //
-// this is meant as a boring smoke-test endpoint for transport + error typing
+// This is meant as a smoke-test endpoint for transport + error typing.
 func (c *PublicClient) Ping(ctx context.Context) (*PingResponse, error) {
-	b, err := c.transport.DoJSON(ctx, http.MethodGet, c.endpoint("/ping"), nil, nil)
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, c.endpoint("/"), nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (c *PublicClient) Ping(ctx context.Context) (*PingResponse, error) {
 
 func (c *PublicClient) OrderBook(ctx context.Context, req *types.OrderBookSummaryRequest) (*types.OrderBookSummaryResponse, error) {
 	q := url.Values{}
-	q.Add("token_id", fmt.Sprintf("%d", req.TokenId))
+	q.Add("token_id", req.TokenId)
 
 	// Side is int, so we send as "0" (Buy) or "1" (Sell)
 
