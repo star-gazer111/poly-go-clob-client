@@ -65,6 +65,17 @@ type MarketResponse struct {
 	Tags             []string `json:"tags"`
 }
 
+// MarketsPage represents a paginated list of markets.
+type MarketsPage struct {
+	Data []MarketResponse `json:"data"`
+	// NextCursor is the continuation token to supply to the API for the next page.
+	NextCursor string `json:"next_cursor"`
+	// Limit is the maximum length of Data.
+	Limit uint64 `json:"limit"`
+	// Count is the actual length of Data.
+	Count uint64 `json:"count"`
+}
+
 // OrderSummary represents a single price level in the order book.
 type OrderSummary struct {
 	Price float64 `json:"price"`

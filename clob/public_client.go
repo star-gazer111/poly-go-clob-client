@@ -190,7 +190,7 @@ func (c *PublicClient) OrderBooks(ctx context.Context, req []types.OrderBookSumm
 	return resp, nil
 }
 
-func (c *PublicClient) GetMarket(ctx context.Context, req *types.MarketRequest) (*types.MarketResponse, error) {
+func (c *PublicClient) Market(ctx context.Context, req *types.MarketRequest) (*types.MarketResponse, error) {
 	u := c.endpoint(fmt.Sprintf("/markets/%s", req.ConditionID))
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
@@ -199,6 +199,27 @@ func (c *PublicClient) GetMarket(ctx context.Context, req *types.MarketRequest) 
 	}
 
 	var resp types.MarketResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// Markets fetches a paginated list of all markets.
+// Pass an empty string for nextCursor to get the first page.
+func (c *PublicClient) Markets(ctx context.Context, nextCursor string) (*types.MarketsPage, error) {
+	u := c.endpoint("/markets")
+	if nextCursor != "" {
+		u = u + "?next_cursor=" + url.QueryEscape(nextCursor)
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.MarketsPage
 	if err := json.Unmarshal(b, &resp); err != nil {
 		return nil, err
 	}
