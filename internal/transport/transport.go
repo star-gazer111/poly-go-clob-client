@@ -10,12 +10,13 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// these are the rules the transport layer must follow
 type Policy struct {
-	Timeout       time.Duration
-	RateLimiter   *rate.Limiter
-	MaxBodyBytes  int64
-	Retry         RetryPolicy
-	UserAgent     string
+	Timeout      time.Duration
+	RateLimiter  *rate.Limiter
+	MaxBodyBytes int64
+	Retry        RetryPolicy
+	UserAgent    string
 }
 
 func DefaultPolicy() Policy {
@@ -38,6 +39,7 @@ func NewTransport(hc *http.Client, p Policy) *Transport {
 	return &Transport{hc: hc, policy: p}
 }
 
+// basically checks whether all policies are followed or not
 func (t *Transport) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	if t.policy.RateLimiter != nil {
 		if err := t.policy.RateLimiter.Wait(ctx); err != nil {
@@ -45,15 +47,44 @@ func (t *Transport) Do(ctx context.Context, req *http.Request) (*http.Response, 
 		}
 	}
 
+	// We cannot use defer cancel() here because it would cancel the context
+	// immediately after headers are received, breaking body reads.
+	// Instead, we wrap the body to cancel on Close().
 	ctx, cancel := context.WithTimeout(ctx, t.policy.Timeout)
-	defer cancel()
 
 	req = req.WithContext(ctx)
 	if t.policy.UserAgent != "" && req.Header.Get("User-Agent") == "" {
 		req.Header.Set("User-Agent", t.policy.UserAgent)
 	}
 
-	return t.hc.Do(req)
+	resp, err := t.hc.Do(req)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+
+	resp.Body = &bodyWrapper{
+		ReadCloser: resp.Body,
+		cancel:     cancel,
+		reader:     io.LimitReader(resp.Body, t.policy.MaxBodyBytes+1),
+	}
+
+	return resp, nil
+}
+
+type bodyWrapper struct {
+	io.ReadCloser
+	cancel context.CancelFunc
+	reader io.Reader
+}
+
+func (w *bodyWrapper) Read(p []byte) (int, error) {
+	return w.reader.Read(p)
+}
+
+func (w *bodyWrapper) Close() error {
+	defer w.cancel()
+	return w.ReadCloser.Close()
 }
 
 func (t *Transport) DoJSON(ctx context.Context, method, url string, headers map[string]string, body []byte) ([]byte, error) {
@@ -74,4 +105,8 @@ func (t *Transport) DoJSON(ctx context.Context, method, url string, headers map[
 	}
 
 	return doJSONWithRetry(ctx, t, req)
+}
+
+func (t *Transport) MaxBodyBytes() int64 {
+	return t.policy.MaxBodyBytes
 }
