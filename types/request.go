@@ -9,3 +9,7 @@ type OrderBookSummaryRequest struct {
 type MarketRequest struct {
 	ConditionID string `json:"condition_id"`
 }
+
+type LastTradePriceRequest struct {
+	TokenId string `json:"token_id"`
+}

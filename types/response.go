@@ -116,3 +116,8 @@ type OrderBookSummaryResponse struct {
 	TickSize       json.Number    `json:"tick_size"`
 	LastTradePrice *json.Number   `json:"last_trade_price,omitempty"`
 }
+
+type LastTradePriceResponse struct {
+	Price json.Number `json:"price"`
+	Side  Side        `json:"side,omitempty"`
+}
