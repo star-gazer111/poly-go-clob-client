@@ -116,3 +116,21 @@ type OrderBookSummaryResponse struct {
 	TickSize       json.Number    `json:"tick_size"`
 	LastTradePrice *json.Number   `json:"last_trade_price,omitempty"`
 }
+
+type LastTradePriceResponse struct {
+	Price json.Number `json:"price"`
+	Side  string      `json:"side,omitempty"`
+}
+
+type TradeEvent struct {
+	AssetID   string      `json:"asset_id"`
+	Price     json.Number `json:"price"`
+	Size      json.Number `json:"size"`
+	Side      string      `json:"side"`
+	Timestamp json.Number `json:"timestamp"`
+}
+
+type MarketTradesEventsResponse struct {
+	Data       []TradeEvent `json:"data"`
+	NextCursor string       `json:"next_cursor"`
+}

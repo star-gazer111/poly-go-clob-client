@@ -9,3 +9,12 @@ type OrderBookSummaryRequest struct {
 type MarketRequest struct {
 	ConditionID string `json:"condition_id"`
 }
+
+type LastTradePriceRequest struct {
+	TokenId string `json:"token_id"`
+}
+
+type GetMarketTradesEventsRequest struct {
+	ConditionID string `json:"condition_id"`
+	NextCursor  string `json:"next_cursor,omitempty"`
+}

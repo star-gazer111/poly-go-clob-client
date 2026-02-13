@@ -392,3 +392,122 @@ func TestIntegration_AllEndpointsReachable(t *testing.T) {
 		})
 	}
 }
+
+// TestIntegration_GetLastTradePrice tests the /last-trade-price endpoint.
+func TestIntegration_GetLastTradePrice(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	// Fetch token_id from Gamma API
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetLastTradePrice with token_id: %s", tokenID)
+
+	req := &types.LastTradePriceRequest{
+		TokenId: tokenID,
+	}
+
+	resp, err := c.GetLastTradePrice(ctx, req)
+	if err != nil {
+		t.Fatalf("GetLastTradePrice failed: %v", err)
+	}
+
+	t.Logf("GetLastTradePrice response: Price=%s, Side=%v", resp.Price, resp.Side)
+
+	if resp.Price.String() == "" {
+		t.Error("Expected price to be present")
+	}
+
+	if resp.Side != "BUY" && resp.Side != "SELL" {
+		t.Errorf("Expected Side to be 'BUY' or 'SELL', got '%s'", resp.Side)
+	}
+}
+
+// TestIntegration_GetLastTradesPrices tests the /last-trades-prices endpoint.
+func TestIntegration_GetLastTradesPrices(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	// Fetch token_id from Gamma API
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetLastTradesPrices with token_id: %s", tokenID)
+
+	req := []types.LastTradePriceRequest{
+		{TokenId: tokenID},
+	}
+
+	resp, err := c.GetLastTradesPrices(ctx, req)
+	if err != nil {
+		t.Fatalf("GetLastTradesPrices failed: %v", err)
+	}
+
+	if len(resp) == 0 {
+		t.Fatal("Expected at least one response")
+	}
+
+	t.Logf("GetLastTradesPrices response: %+v", resp[0])
+
+	if resp[0].Price.String() == "" {
+		t.Error("Expected price to be present")
+	}
+}
+
+// TestIntegration_GetMarketTradesEvents tests the /events/trade endpoint.
+func TestIntegration_GetMarketTradesEvents(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	// Fetch token_id from Gamma API to get a valid condition_id
+	// Note: We need a condition_id, and fetchTokenIDFromGamma returns a token_id.
+	// For simplicity, we'll fetch markets and use the first one's condition_id.
+
+	markets, err := c.Markets(ctx, "")
+	if err != nil {
+		t.Fatalf("Markets failed: %v", err)
+	}
+	if len(markets.Data) == 0 {
+		t.Skip("No markets available to test GetMarketTradesEvents")
+	}
+
+	var conditionID string
+	for _, m := range markets.Data {
+		if m.ConditionID != nil && *m.ConditionID != "" {
+			conditionID = *m.ConditionID
+			break
+		}
+	}
+
+	if conditionID == "" {
+		t.Skip("No valid condition_id found")
+	}
+
+	t.Logf("Testing GetMarketTradesEvents with condition_id: %s", conditionID)
+
+	req := &types.GetMarketTradesEventsRequest{
+		ConditionID: conditionID,
+	}
+
+	resp, err := c.GetMarketTradesEvents(ctx, req)
+	if err != nil {
+		t.Fatalf("GetMarketTradesEvents failed: %v", err)
+	}
+
+	t.Logf("GetMarketTradesEvents response: next_cursor=%s, count=%d", resp.NextCursor, len(resp.Data))
+
+	if len(resp.Data) > 0 {
+		t.Logf("First trade event: %+v", resp.Data[0])
+	}
+}

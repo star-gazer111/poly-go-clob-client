@@ -168,6 +168,70 @@ func (c *PublicClient) OrderBook(ctx context.Context, req *types.OrderBookSummar
 	return &resp, nil
 }
 
+func (c *PublicClient) GetLastTradePrice(ctx context.Context, req *types.LastTradePriceRequest) (*types.LastTradePriceResponse, error) {
+	q := url.Values{}
+	q.Add("token_id", req.TokenId)
+
+	u := c.endpoint("/last-trade-price")
+	if len(q) > 0 {
+		u = u + "?" + q.Encode()
+	}
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.LastTradePriceResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (c *PublicClient) GetLastTradesPrices(ctx context.Context, req []types.LastTradePriceRequest) ([]*types.LastTradePriceResponse, error) {
+	u := c.endpoint("/last-trades-prices")
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, body)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp []*types.LastTradePriceResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (c *PublicClient) GetMarketTradesEvents(ctx context.Context, req *types.GetMarketTradesEventsRequest) (*types.MarketTradesEventsResponse, error) {
+	u := c.endpoint("/events/trade")
+	q := url.Values{}
+	q.Add("condition_id", req.ConditionID)
+	if req.NextCursor != "" {
+		q.Add("next_cursor", req.NextCursor)
+	}
+	u = u + "?" + q.Encode()
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.MarketTradesEventsResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 func (c *PublicClient) OrderBooks(ctx context.Context, req []types.OrderBookSummaryRequest) ([]*types.OrderBookSummaryResponse, error) {
 	u := c.endpoint("/books")
 
