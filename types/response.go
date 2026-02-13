@@ -120,5 +120,5 @@ type OrderBookSummaryResponse struct {
 
 type LastTradePriceResponse struct {
 	Price json.Number `json:"price"`
-	Side  Side        `json:"side,omitempty"`
+	Side  string      `json:"side,omitempty"`
 }
