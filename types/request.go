@@ -13,3 +13,8 @@ type MarketRequest struct {
 type LastTradePriceRequest struct {
 	TokenId string `json:"token_id"`
 }
+
+type GetMarketTradesEventsRequest struct {
+	ConditionID string `json:"condition_id"`
+	NextCursor  string `json:"next_cursor,omitempty"`
+}
