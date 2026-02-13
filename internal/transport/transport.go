@@ -106,3 +106,7 @@ func (t *Transport) DoJSON(ctx context.Context, method, url string, headers map[
 
 	return doJSONWithRetry(ctx, t, req)
 }
+
+func (t *Transport) MaxBodyBytes() int64 {
+	return t.policy.MaxBodyBytes
+}
