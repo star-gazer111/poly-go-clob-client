@@ -427,3 +427,38 @@ func TestIntegration_GetLastTradePrice(t *testing.T) {
 		t.Errorf("Expected Side to be 'BUY' or 'SELL', got '%s'", resp.Side)
 	}
 }
+
+// TestIntegration_GetLastTradesPrices tests the /last-trades-prices endpoint.
+func TestIntegration_GetLastTradesPrices(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	// Fetch token_id from Gamma API
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetLastTradesPrices with token_id: %s", tokenID)
+
+	req := []types.LastTradePriceRequest{
+		{TokenId: tokenID},
+	}
+
+	resp, err := c.GetLastTradesPrices(ctx, req)
+	if err != nil {
+		t.Fatalf("GetLastTradesPrices failed: %v", err)
+	}
+
+	if len(resp) == 0 {
+		t.Fatal("Expected at least one response")
+	}
+
+	t.Logf("GetLastTradesPrices response: %+v", resp[0])
+
+	if resp[0].Price.String() == "" {
+		t.Error("Expected price to be present")
+	}
+}
