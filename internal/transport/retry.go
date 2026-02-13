@@ -150,15 +150,42 @@ func doJSONWithRetry(ctx context.Context, t *Transport, req *http.Request) ([]by
 }
 
 func sleepBackoff(ctx context.Context, p RetryPolicy, attempt int) {
-	delay := p.BaseDelay * time.Duration(1<<uint(attempt-1))
-	if delay > p.MaxDelay {
+	if attempt <= 0 {
+		attempt = 1
+	}
+
+	delay := p.BaseDelay
+	if delay <= 0 {
+		delay = 50 * time.Millisecond // or whatever default you want
+	}
+	if p.MaxDelay > 0 && delay > p.MaxDelay {
 		delay = p.MaxDelay
 	}
-	timer := time.NewTimer(delay)
-	defer timer.Stop()
+
+	// Exponential: delay *= 2^(attempt-1), but clamp to MaxDelay safely.
+	for i := 1; i < attempt; i++ {
+		if p.MaxDelay > 0 {
+			// If doubling would exceed MaxDelay, clamp and stop.
+			if delay >= p.MaxDelay/2 {
+				delay = p.MaxDelay
+				break
+			}
+		}
+		// Doubling duration is safe here because we clamp above.
+		delay *= 2
+	}
+
+	if p.MaxDelay > 0 && delay > p.MaxDelay {
+		delay = p.MaxDelay
+	}
+
+	t := time.NewTimer(delay)
+	defer t.Stop()
 
 	select {
 	case <-ctx.Done():
-	case <-timer.C:
+		return
+	case <-t.C:
+		return
 	}
 }
