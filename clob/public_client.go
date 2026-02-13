@@ -189,6 +189,27 @@ func (c *PublicClient) GetLastTradePrice(ctx context.Context, req *types.LastTra
 	return &resp, nil
 }
 
+func (c *PublicClient) GetLastTradesPrices(ctx context.Context, req []types.LastTradePriceRequest) ([]*types.LastTradePriceResponse, error) {
+	u := c.endpoint("/last-trades-prices")
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, body)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp []*types.LastTradePriceResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 func (c *PublicClient) OrderBooks(ctx context.Context, req []types.OrderBookSummaryRequest) ([]*types.OrderBookSummaryResponse, error) {
 	u := c.endpoint("/books")
 
