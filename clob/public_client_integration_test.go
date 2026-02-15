@@ -334,6 +334,59 @@ func fetchTokenIDFromGamma(ctx context.Context) (string, error) {
 	return "", fmt.Errorf("no valid token_id found in markets")
 }
 
+func fetchTokenIDsFromGamma(ctx context.Context, limit int) ([]string, error) {
+	url := fmt.Sprintf("https://gamma-api.polymarket.com/markets?limit=%d&active=true&closed=false", limit*5)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("gamma API returned status %d", resp.StatusCode)
+	}
+
+	var markets []GammaMarket
+	if err := json.NewDecoder(resp.Body).Decode(&markets); err != nil {
+		return nil, err
+	}
+
+	if len(markets) == 0 {
+		return nil, fmt.Errorf("no markets found")
+	}
+
+	var collectedIDs []string
+	for _, m := range markets {
+		if m.ClobTokenIds == "" || m.ClobTokenIds == "null" {
+			continue
+		}
+
+		var tokenIds []string
+		if err := json.Unmarshal([]byte(m.ClobTokenIds), &tokenIds); err == nil && len(tokenIds) > 0 {
+			if tokenIds[0] != "" {
+				collectedIDs = append(collectedIDs, tokenIds[0])
+				if len(collectedIDs) >= limit {
+					break
+				}
+			}
+		}
+	}
+
+	if len(collectedIDs) < 1 {
+		return nil, fmt.Errorf("no valid token_ids found")
+	}
+
+	// if we collect less than limit but more than one, then DONT throw error
+
+	return collectedIDs, nil
+}
+
 // TestIntegration_AllEndpointsReachable runs a smoke test to verify all endpoints are reachable.
 func TestIntegration_AllEndpointsReachable(t *testing.T) {
 	c := getTestClient(t)
@@ -509,5 +562,249 @@ func TestIntegration_GetMarketTradesEvents(t *testing.T) {
 
 	if len(resp.Data) > 0 {
 		t.Logf("First trade event: %+v", resp.Data[0])
+	}
+}
+
+func TestIntegration_Midpoint(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	// fetch token id from Gamma API
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing Orderbook with token_id : %s", tokenID)
+
+	req := &types.MidpointRequest{
+		TokenId: tokenID,
+	}
+
+	resp, err := c.Midpoint(ctx, req)
+	if err != nil {
+		t.Fatalf("Expected mid point to be present: %v", err)
+	}
+
+	t.Logf("Mid point: %v", resp.Mid)
+}
+
+func TestIntegration_Midpoints(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	tokenIDs, err := fetchTokenIDsFromGamma(ctx, 3)
+	if err != nil {
+		t.Skipf("Could not fetch tokens from gamma api : %v", err)
+	}
+
+	t.Logf("Testing midpoints with %d tokens : %v", len(tokenIDs), tokenIDs)
+
+	var req []types.MidpointRequest
+	for _, tid := range tokenIDs {
+		req = append(req, types.MidpointRequest{TokenId: tid})
+	}
+
+	resp, err := c.Midpoints(ctx, req)
+	if err != nil {
+		t.Fatalf("Error in fetching midpoints : %v", err)
+	}
+
+	if resp == nil {
+		t.Fatal("Expected non nill response map")
+	}
+
+	for _, tid := range tokenIDs {
+		if val, ok := resp[tid]; !ok {
+			t.Errorf("Expected token %s in response map, but was missing", tid)
+		} else {
+			t.Logf("Token %s midpoint : %v", tid, val)
+		}
+	}
+}
+
+func TestIntegration_GetPrice(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetPrice with token_id: %s", tokenID)
+
+	req := types.PriceRequest{
+		TokenId: tokenID,
+		Side:    "BUY",
+	}
+
+	resp, err := c.GetPrice(ctx, req)
+	if err != nil {
+		t.Fatalf("GetPrice failed: %v", err)
+	}
+
+	t.Logf("Price for %s (BUY): %v", tokenID, resp.Price)
+}
+
+func TestIntegration_GetPrices(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	tokenIDs, err := fetchTokenIDsFromGamma(ctx, 3)
+	if err != nil {
+		t.Skipf("Could not fetch token_ids from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetPrices with %d tokens", len(tokenIDs))
+
+	var reqs []types.PriceRequest
+	for _, tid := range tokenIDs {
+		reqs = append(reqs, types.PriceRequest{TokenId: tid, Side: "BUY"})
+	}
+
+	resp, err := c.GetPrices(ctx, reqs)
+	if err != nil {
+		t.Fatalf("GetPrices failed: %v", err)
+	}
+
+	if resp == nil {
+		t.Fatal("Expected non-nil response map")
+	}
+
+	for _, tid := range tokenIDs {
+		sides, ok := resp[tid]
+		if !ok {
+			t.Errorf("Expected token %s in response map", tid)
+			continue
+		}
+
+		val, ok := sides["BUY"]
+		if !ok {
+			t.Errorf("Expected BUY price for token %s", tid)
+		} else {
+			t.Logf("Token %s BUY Price: %v", tid, val)
+		}
+	}
+}
+
+func TestIntegration_GetSpread(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetSpread with token_id: %s", tokenID)
+
+	req := types.SpreadRequest{TokenId: tokenID}
+	resp, err := c.GetSpread(ctx, req)
+	if err != nil {
+		t.Fatalf("GetSpread failed: %v", err)
+	}
+
+	t.Logf("Spread: %v", resp.Spread)
+}
+
+func TestIntegration_GetSpreads(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	tokenIDs, err := fetchTokenIDsFromGamma(ctx, 3)
+	if err != nil {
+		t.Skipf("Could not fetch token_ids from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetSpreads with %d tokens", len(tokenIDs))
+
+	var reqs []types.SpreadRequest
+	for _, tid := range tokenIDs {
+		reqs = append(reqs, types.SpreadRequest{TokenId: tid})
+	}
+
+	resp, err := c.GetSpreads(ctx, reqs)
+	if err != nil {
+		t.Fatalf("GetSpreads failed: %v", err)
+	}
+
+	if resp == nil {
+		t.Fatal("Expected non-nil response map")
+	}
+
+	for _, tid := range tokenIDs {
+		if val, ok := resp[tid]; !ok {
+			t.Errorf("Expected token %s in response map", tid)
+		} else {
+			t.Logf("Token %s Spread: %v", tid, val)
+		}
+	}
+}
+
+func TestIntegration_GetPricesHistory(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetPricesHistory with token_id: %s", tokenID)
+
+	req := types.PricesHistoryRequest{
+		Market:   tokenID,
+		Interval: types.IntervalMax,
+	}
+
+	resp, err := c.GetPricesHistory(ctx, req)
+	if err != nil {
+		t.Fatalf("GetPricesHistory (max) failed: %v", err)
+	}
+
+	t.Logf("History items (max): %d", len(resp.History))
+
+	if len(resp.History) > 0 {
+		first := resp.History[0]
+		last := resp.History[len(resp.History)-1]
+		t.Logf("Range: %d to %d", first.Time, last.Time)
+
+		// Test branch 2: Custom Range
+		mid := (first.Time + last.Time) / 2
+		start := mid - 120 
+		end := mid + 120
+
+		t.Logf("Testing GetPricesHistory with custom range: %d - %d", start, end)
+		reqRange := types.PricesHistoryRequest{
+			Market:  tokenID,
+			StartTs: &start,
+			EndTs:   &end,
+		}
+
+		respRange, err := c.GetPricesHistory(ctx, reqRange)
+		if err != nil {
+			t.Fatalf("GetPricesHistory (range) failed: %v", err)
+		}
+
+		t.Logf("History items (range): %d", len(respRange.History))
+
+		for _, p := range respRange.History {
+			t.Logf("{Time Price} : %v", p)
+		}
 	}
 }
