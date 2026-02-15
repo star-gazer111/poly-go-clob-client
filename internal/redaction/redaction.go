@@ -12,14 +12,15 @@ const DefaultRedaction = "***"
 // It preserves a small prefix/suffix to help debugging without leaking secrets
 //
 // Some simple examples to understand:
-//   "abcd" -> "***"
-//   "abcdefg" -> "abc***efg"
+//
+//	"abcd" -> "***"
+//	"abcdefg" -> "abc***efg"
 func Redact(s string) string {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return ""
 	}
-	// Keeping the behavior conservative for short secrets 
+	// Keeping the behavior conservative for short secrets
 	if len(s) <= 8 {
 		return DefaultRedaction
 	}
