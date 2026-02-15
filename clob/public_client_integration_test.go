@@ -786,7 +786,7 @@ func TestIntegration_GetPricesHistory(t *testing.T) {
 
 		// Test branch 2: Custom Range
 		mid := (first.Time + last.Time) / 2
-		start := mid - 120 
+		start := mid - 120
 		end := mid + 120
 
 		t.Logf("Testing GetPricesHistory with custom range: %d - %d", start, end)

@@ -119,12 +119,12 @@ type PingResponse struct {
 	Raw     string `json:"-"`
 }
 
-// Ping calls the root endpoint as a health check and returns a parsed response.
+// Ping calls the "/ping" endpoint as a health check and returns a parsed response.
 // If the server returns JSON we parse it, otherwise we return raw string.
 //
 // This is meant as a smoke-test endpoint for transport + error typing.
 func (c *PublicClient) Ping(ctx context.Context) (*PingResponse, error) {
-	b, err := c.transport.DoJSON(ctx, http.MethodGet, c.endpoint("/"), nil, nil)
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, c.endpoint("/ping"), nil, nil)
 	if err != nil {
 		return nil, err
 	}
