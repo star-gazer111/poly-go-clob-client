@@ -34,7 +34,7 @@ func TestMidpoint_Happy(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		resp := types.MidpointResponse{Mid: expectedMid}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 	defer srv.Close()
 
@@ -91,7 +91,7 @@ func TestMidpoints_Happy(t *testing.T) {
 		m := map[string]decimal.Decimal{
 			"123": decimal.NewFromFloat(0.5),
 		}
-		json.NewEncoder(w).Encode(m)
+		_ = json.NewEncoder(w).Encode(m)
 	})
 	defer srv.Close()
 
@@ -139,7 +139,7 @@ func TestGetPrice_Happy(t *testing.T) {
 		if r.URL.Query().Get("side") != "BUY" {
 			t.Errorf("Expected side=BUY")
 		}
-		json.NewEncoder(w).Encode(types.PriceResponse{Price: expectedPrice})
+		_ = json.NewEncoder(w).Encode(types.PriceResponse{Price: expectedPrice})
 	})
 	defer srv.Close()
 
@@ -174,7 +174,7 @@ func TestGetPrices_Happy(t *testing.T) {
 		m := map[string]map[string]decimal.Decimal{
 			"123": {"BUY": decimal.NewFromFloat(0.4)},
 		}
-		json.NewEncoder(w).Encode(m)
+		_ = json.NewEncoder(w).Encode(m)
 	})
 	defer srv.Close()
 
@@ -211,7 +211,7 @@ func TestGetSpread_Happy(t *testing.T) {
 		if r.URL.Query().Get("token_id") != "123" {
 			t.Errorf("Expected token_id=123")
 		}
-		json.NewEncoder(w).Encode(types.SpreadResponse{Spread: expectedSpread})
+		_ = json.NewEncoder(w).Encode(types.SpreadResponse{Spread: expectedSpread})
 	})
 	defer srv.Close()
 
@@ -246,7 +246,7 @@ func TestGetSpreads_Happy(t *testing.T) {
 		m := map[string]decimal.Decimal{
 			"123": decimal.NewFromFloat(0.01),
 		}
-		json.NewEncoder(w).Encode(m)
+		_ = json.NewEncoder(w).Encode(m)
 	})
 	defer srv.Close()
 
@@ -292,7 +292,7 @@ func TestGetPricesHistory_Happy(t *testing.T) {
 		resp := types.PricesHistoryResponse{
 			History: []types.PriceHistoryItem{item},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 	defer srv.Close()
 

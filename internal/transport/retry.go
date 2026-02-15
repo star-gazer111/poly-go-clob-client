@@ -122,7 +122,7 @@ func doJSONWithRetry(ctx context.Context, t *Transport, req *http.Request) ([]by
 
 		// IMPORTANT: close per attempt; do NOT defer in loop.
 		b, rerr := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		if rerr != nil {
 			return nil, types.WithSource(types.KindInternal, rerr)
