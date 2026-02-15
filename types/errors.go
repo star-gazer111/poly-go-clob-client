@@ -91,8 +91,8 @@ func (s *Synchronization) Error() string {
 
 // in rust chain_id is ChainId but in go i am keeping it uint64 for now - confirm later todo
 type MissingContractConfig struct {
-	ChainID  uint64
-	NegRisk  bool
+	ChainID uint64
+	NegRisk bool
 }
 
 func (m *MissingContractConfig) Error() string {
