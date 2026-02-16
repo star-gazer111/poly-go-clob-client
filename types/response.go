@@ -100,20 +100,20 @@ type SimplifiedMarketsPage struct {
 
 // OrderSummary represents a single price level in the order book.
 type OrderSummary struct {
-	Price json.Number `json:"price"`
-	Size  json.Number `json:"size"`
+	Price decimal.Decimal `json:"price"`
+	Size  decimal.Decimal `json:"size"`
 }
 
 // OrderBookSummaryResponse represents the response from the order book summary endpoint.
 type OrderBookSummaryResponse struct {
-	Market         common.Hash    `json:"market"`
-	AssetID        string         `json:"asset_id"`
-	Timestamp      json.Number    `json:"timestamp"` // Unix timestamp in milliseconds (can be string or number)
-	Hash           *string        `json:"hash,omitempty"`
-	Bids           []OrderSummary `json:"bids"`
-	Asks           []OrderSummary `json:"asks"`
-	MinOrderSize   json.Number    `json:"min_order_size"`
-	NegRisk        bool           `json:"neg_risk"`
-	TickSize       json.Number    `json:"tick_size"`
-	LastTradePrice *json.Number   `json:"last_trade_price,omitempty"`
+	Market         common.Hash     `json:"market"`
+	AssetID        string          `json:"asset_id"`
+	Timestamp      json.Number     `json:"timestamp"` // Unix timestamp in milliseconds (can be string or number)
+	Hash           *string         `json:"hash,omitempty"`
+	Bids           []OrderSummary  `json:"bids"`
+	Asks           []OrderSummary  `json:"asks"`
+	MinOrderSize   decimal.Decimal `json:"min_order_size"`
+	NegRisk        bool            `json:"neg_risk"`
+	TickSize       json.Number     `json:"tick_size"`
+	LastTradePrice *json.Number    `json:"last_trade_price,omitempty"`
 }
