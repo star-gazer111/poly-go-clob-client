@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/shopspring/decimal"
 )
 
@@ -105,7 +106,7 @@ type OrderSummary struct {
 
 // OrderBookSummaryResponse represents the response from the order book summary endpoint.
 type OrderBookSummaryResponse struct {
-	Market         string         `json:"market"`
+	Market         common.Hash    `json:"market"`
 	AssetID        string         `json:"asset_id"`
 	Timestamp      json.Number    `json:"timestamp"` // Unix timestamp in milliseconds (can be string or number)
 	Hash           *string        `json:"hash,omitempty"`
