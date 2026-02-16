@@ -117,3 +117,31 @@ type OrderBookSummaryResponse struct {
 	TickSize       json.Number     `json:"tick_size"`
 	LastTradePrice *json.Number    `json:"last_trade_price,omitempty"`
 }
+
+// ServerTimeResponse represents the response from the server time endpoint.
+type ServerTimeResponse struct {
+	serverTime string
+	status     string
+}
+
+// UnmarshalJSON implements custom unmarshaling for ServerTimeResponse
+func (s *ServerTimeResponse) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		ServerTime string `json:"server_time"`
+		Status     string `json:"status"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	s.serverTime = aux.ServerTime
+	s.status = aux.Status
+	return nil
+}
+
+// ToTime converts the server time string to a time.Time object.
+func (s *ServerTimeResponse) ToTime() (time.Time, error) {
+	// The format usually returned is ISO 8601, e.g., "2023-10-27T10:00:00Z"
+	// However, sometimes APIs return specific layouts.
+	// We'll try RFC3339 first as it's the standard for JSON.
+	return time.Parse(time.RFC3339, s.serverTime)
+}

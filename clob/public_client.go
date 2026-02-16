@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/star-gazer111/poly-go-clob-client/internal/transport"
 	"github.com/star-gazer111/poly-go-clob-client/types"
@@ -288,4 +289,30 @@ func (c *PublicClient) SamplingSimplifiedMarkets(ctx context.Context, nextCursor
 	}
 
 	return &resp, nil
+}
+
+// GetOK checks if the server is reachable and responding with OK.
+func (c *PublicClient) GetOK(ctx context.Context) (bool, error) {
+	resp, err := c.Ping(ctx)
+	if err != nil {
+		return false, err
+	}
+	return resp.OK, nil
+}
+
+// GetServerTime fetches the current server time within the CLOB system.
+func (c *PublicClient) GetServerTime(ctx context.Context) (time.Time, error) {
+	u := c.endpoint("/time")
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	var resp types.ServerTimeResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return time.Time{}, err
+	}
+
+	return resp.ToTime()
 }
