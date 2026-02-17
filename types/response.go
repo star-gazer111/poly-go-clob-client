@@ -120,28 +120,20 @@ type OrderBookSummaryResponse struct {
 
 // ServerTimeResponse represents the response from the server time endpoint.
 type ServerTimeResponse struct {
-	serverTime string
-	status     string
+	serverTime int64
 }
 
 // UnmarshalJSON implements custom unmarshaling for ServerTimeResponse
 func (s *ServerTimeResponse) UnmarshalJSON(data []byte) error {
-	var aux struct {
-		ServerTime string `json:"server_time"`
-		Status     string `json:"status"`
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
+	var timestamp int64
+	if err := json.Unmarshal(data, &timestamp); err != nil {
 		return err
 	}
-	s.serverTime = aux.ServerTime
-	s.status = aux.Status
+	s.serverTime = timestamp
 	return nil
 }
 
 // ToTime converts the server time string to a time.Time object.
 func (s *ServerTimeResponse) ToTime() (time.Time, error) {
-	// The format usually returned is ISO 8601, e.g., "2023-10-27T10:00:00Z"
-	// However, sometimes APIs return specific layouts.
-	// We'll try RFC3339 first as it's the standard for JSON.
-	return time.Parse(time.RFC3339, s.serverTime)
+	return time.Unix(s.serverTime, 0), nil
 }

@@ -3,6 +3,7 @@ package clob
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -123,8 +124,8 @@ func TestPublicClient_GetOK(t *testing.T) {
 }
 
 func TestPublicClient_GetServerTime(t *testing.T) {
-	ts := "2023-10-27T10:00:00Z"
-	expectedTime, _ := time.Parse(time.RFC3339, ts)
+	ts := int64(1698400800)
+	expectedTime := time.Unix(ts, 0)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/time" {
@@ -132,7 +133,7 @@ func TestPublicClient_GetServerTime(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		_, _ = w.Write([]byte(`{"server_time":"` + ts + `","status":"operational"}`))
+		_, _ = w.Write([]byte(fmt.Sprintf("%d", ts)))
 	}))
 	defer srv.Close()
 
