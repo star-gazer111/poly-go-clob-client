@@ -32,12 +32,12 @@ func TestNewPublicClient_BaseURLValidation(t *testing.T) {
 
 func TestPublicClient_Ping_OK_JSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/ping" {
-			t.Fatalf("expected /ping, got %s", r.URL.Path)
+		if r.URL.Path != "/" {
+			t.Fatalf("expected /, got %s", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		_, _ = w.Write([]byte(`{"ok":true,"message":"pong"}`))
+		_, _ = w.Write([]byte(`{"ok":true,"message":"OK"}`))
 	}))
 	defer srv.Close()
 
@@ -53,7 +53,7 @@ func TestPublicClient_Ping_OK_JSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Ping err: %v", err)
 	}
-	if out == nil || !out.OK || out.Message != "pong" {
+	if out == nil || !out.OK || out.Message != "OK" {
 		t.Fatalf("unexpected ping response: %+v", out)
 	}
 }

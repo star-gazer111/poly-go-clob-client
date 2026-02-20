@@ -111,6 +111,16 @@ func (c *PublicClient) endpoint(path string) string {
 	return base.String()
 }
 
+// endpointWithQuery builds the full URL for path and appends q as a query string.
+// If q is empty the bare endpoint is returned unchanged.
+func (c *PublicClient) endpointWithQuery(path string, q url.Values) string {
+	u := c.endpoint(path)
+	if len(q) > 0 {
+		u = u + "?" + q.Encode()
+	}
+	return u
+}
+
 // PingResponse is a minimal response model - kept it intentionally small for v0.1
 type PingResponse struct {
 	Message string `json:"message,omitempty"`
@@ -124,7 +134,7 @@ type PingResponse struct {
 //
 // This is meant as a smoke-test endpoint for transport + error typing.
 func (c *PublicClient) Ping(ctx context.Context) (*PingResponse, error) {
-	b, err := c.transport.DoJSON(ctx, http.MethodGet, c.endpoint("/ping"), nil, nil)
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, c.endpoint("/"), nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -150,10 +160,7 @@ func (c *PublicClient) OrderBook(ctx context.Context, req *types.OrderBookSummar
 	q.Add("side", fmt.Sprintf("%d", req.Side))
 
 	// Construct URL with query params
-	u := c.endpoint("/book")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/book", q)
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -172,10 +179,7 @@ func (c *PublicClient) GetLastTradePrice(ctx context.Context, req *types.LastTra
 	q := url.Values{}
 	q.Add("token_id", req.TokenId)
 
-	u := c.endpoint("/last-trade-price")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/last-trade-price", q)
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
 		return nil, err
@@ -358,10 +362,7 @@ func (c *PublicClient) Midpoint(ctx context.Context, req *types.MidpointRequest)
 	q := url.Values{}
 	q.Add("token_id", req.TokenId)
 
-	u := c.endpoint("/midpoint")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/midpoint", q)
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -403,10 +404,7 @@ func (c *PublicClient) GetPrice(ctx context.Context, req types.PriceRequest) (ty
 	q.Add("token_id", req.TokenId)
 	q.Add("side", req.Side)
 
-	u := c.endpoint("/price")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/price", q)
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -449,10 +447,7 @@ func (c *PublicClient) GetSpread(ctx context.Context, req types.SpreadRequest) (
 		q.Add("side", fmt.Sprintf("%d", *req.Side))
 	}
 
-	u := c.endpoint("/spread")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/spread", q)
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -515,10 +510,7 @@ func (c *PublicClient) GetPricesHistory(ctx context.Context, req types.PricesHis
 		q.Add("fidelity", fmt.Sprintf("%d", *req.Fidelity))
 	}
 
-	u := c.endpoint("/prices-history")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/prices-history", q)
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
