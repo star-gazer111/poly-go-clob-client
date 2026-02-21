@@ -134,3 +134,30 @@ type MarketTradesEventsResponse struct {
 	Data       []TradeEvent `json:"data"`
 	NextCursor string       `json:"next_cursor"`
 }
+
+type MidpointResponse struct {
+	Mid decimal.Decimal
+}
+
+type MidpointsResponse map[string]decimal.Decimal
+
+type PriceResponse struct {
+	Price decimal.Decimal `json:"price"`
+}
+
+type PricesResponse map[string]map[string]decimal.Decimal
+
+type SpreadResponse struct {
+	Spread decimal.Decimal `json:"spread"`
+}
+
+type SpreadsResponse map[string]decimal.Decimal
+
+type PriceHistoryItem struct {
+	Time  int64           `json:"t"`
+	Price decimal.Decimal `json:"p"`
+}
+
+type PricesHistoryResponse struct {
+	History []PriceHistoryItem `json:"history"`
+}

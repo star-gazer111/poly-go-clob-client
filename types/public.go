@@ -11,3 +11,15 @@ const (
 	SideSell    Side = 1
 	SideUnknown Side = 255
 )
+
+// Interval represents time intervals for price history.
+type Interval string
+
+const (
+	Interval1m  Interval = "1m"
+	Interval1h  Interval = "1h"
+	Interval6h  Interval = "6h"
+	Interval1d  Interval = "1d"
+	Interval1w  Interval = "1w"
+	IntervalMax Interval = "max"
+)

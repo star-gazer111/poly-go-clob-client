@@ -91,8 +91,9 @@ func bodyPreview(b []byte) string {
 
 // doJSONWithRetry performs the request via Transport.Do and returns the raw response body.
 // On non-2xx it returns a typed error compatible with:
-//   errors.As(err, *types.Status)
-//   errors.As(err, *types.Error) with KindStatus
+//
+//	errors.As(err, *types.Status)
+//	errors.As(err, *types.Error) with KindStatus
 func doJSONWithRetry(ctx context.Context, t *Transport, req *http.Request) ([]byte, error) {
 	p := t.policy.Retry
 	attempts := 0
@@ -121,7 +122,7 @@ func doJSONWithRetry(ctx context.Context, t *Transport, req *http.Request) ([]by
 
 		// IMPORTANT: close per attempt; do NOT defer in loop.
 		b, rerr := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		if rerr != nil {
 			return nil, types.WithSource(types.KindInternal, rerr)

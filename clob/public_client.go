@@ -111,6 +111,16 @@ func (c *PublicClient) endpoint(path string) string {
 	return base.String()
 }
 
+// endpointWithQuery builds the full URL for path and appends q as a query string.
+// If q is empty the bare endpoint is returned unchanged.
+func (c *PublicClient) endpointWithQuery(path string, q url.Values) string {
+	u := c.endpoint(path)
+	if len(q) > 0 {
+		u = u + "?" + q.Encode()
+	}
+	return u
+}
+
 // PingResponse is a minimal response model - kept it intentionally small for v0.1
 type PingResponse struct {
 	Message string `json:"message,omitempty"`
@@ -119,7 +129,7 @@ type PingResponse struct {
 	Raw     string `json:"-"`
 }
 
-// Ping calls the root endpoint as a health check and returns a parsed response.
+// Ping calls the "/ping" endpoint as a health check and returns a parsed response.
 // If the server returns JSON we parse it, otherwise we return raw string.
 //
 // This is meant as a smoke-test endpoint for transport + error typing.
@@ -150,10 +160,7 @@ func (c *PublicClient) OrderBook(ctx context.Context, req *types.OrderBookSummar
 	q.Add("side", fmt.Sprintf("%d", req.Side))
 
 	// Construct URL with query params
-	u := c.endpoint("/book")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/book", q)
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -172,10 +179,7 @@ func (c *PublicClient) GetLastTradePrice(ctx context.Context, req *types.LastTra
 	q := url.Values{}
 	q.Add("token_id", req.TokenId)
 
-	u := c.endpoint("/last-trade-price")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/last-trade-price", q)
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
 		return nil, err
@@ -352,4 +356,171 @@ func (c *PublicClient) SamplingSimplifiedMarkets(ctx context.Context, nextCursor
 	}
 
 	return &resp, nil
+}
+
+func (c *PublicClient) Midpoint(ctx context.Context, req *types.MidpointRequest) (*types.MidpointResponse, error) {
+	q := url.Values{}
+	q.Add("token_id", req.TokenId)
+
+	u := c.endpointWithQuery("/midpoint", q)
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.MidpointResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (c *PublicClient) Midpoints(ctx context.Context, req []types.MidpointRequest) (types.MidpointsResponse, error) {
+	u := c.endpoint("/midpoints")
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodPost, u, nil, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.MidpointsResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (c *PublicClient) GetPrice(ctx context.Context, req types.PriceRequest) (types.PriceResponse, error) {
+	q := url.Values{}
+	q.Add("token_id", req.TokenId)
+	q.Add("side", req.Side)
+
+	u := c.endpointWithQuery("/price", q)
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return types.PriceResponse{}, err
+	}
+
+	var resp types.PriceResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return types.PriceResponse{}, err
+	}
+
+	return resp, nil
+}
+
+func (c *PublicClient) GetPrices(ctx context.Context, req []types.PriceRequest) (types.PricesResponse, error) {
+	u := c.endpoint("/prices")
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodPost, u, nil, body)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.PricesResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (c *PublicClient) GetSpread(ctx context.Context, req types.SpreadRequest) (types.SpreadResponse, error) {
+	q := url.Values{}
+	q.Add("token_id", req.TokenId)
+	if req.Side != nil {
+		q.Add("side", fmt.Sprintf("%d", *req.Side))
+	}
+
+	u := c.endpointWithQuery("/spread", q)
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return types.SpreadResponse{}, err
+	}
+
+	var resp types.SpreadResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return types.SpreadResponse{}, err
+	}
+
+	return resp, nil
+}
+
+func (c *PublicClient) GetSpreads(ctx context.Context, req []types.SpreadRequest) (types.SpreadsResponse, error) {
+	u := c.endpoint("/spreads")
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := c.transport.DoJSON(ctx, http.MethodPost, u, nil, body)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.SpreadsResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (c *PublicClient) GetPricesHistory(ctx context.Context, req types.PricesHistoryRequest) (types.PricesHistoryResponse, error) {
+	// Validate mutually exclusive parameters matching Rust's TimeRange enum behavior
+	hasInterval := req.Interval != ""
+	hasRange := req.StartTs != nil || req.EndTs != nil
+
+	if hasInterval && hasRange {
+		return types.PricesHistoryResponse{}, types.ValidationErr("cannot provide both Interval and StartTs/EndTs")
+	}
+	if !hasInterval && !hasRange {
+		return types.PricesHistoryResponse{}, types.ValidationErr("must provide either Interval or StartTs/EndTs")
+	}
+
+	q := url.Values{}
+	q.Add("market", req.Market)
+	if req.Interval != "" {
+		q.Add("interval", string(req.Interval))
+	}
+	if req.StartTs != nil {
+		q.Add("startTs", fmt.Sprintf("%d", *req.StartTs))
+	}
+	if req.EndTs != nil {
+		q.Add("endTs", fmt.Sprintf("%d", *req.EndTs))
+	}
+	if req.Fidelity != nil {
+		q.Add("fidelity", fmt.Sprintf("%d", *req.Fidelity))
+	}
+
+	u := c.endpointWithQuery("/prices-history", q)
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return types.PricesHistoryResponse{}, err
+	}
+
+	var resp types.PricesHistoryResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return types.PricesHistoryResponse{}, err
+	}
+
+	return resp, nil
 }
