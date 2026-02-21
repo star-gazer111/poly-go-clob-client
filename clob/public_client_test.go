@@ -83,8 +83,8 @@ func TestPublicClient_Ping_Non2xx_ReturnsTypedError(t *testing.T) {
 	if st.StatusCode != 429 {
 		t.Fatalf("expected 429, got %d", st.StatusCode)
 	}
-	if st.Path != "/ping" {
-		t.Fatalf("expected path /ping, got %s", st.Path)
+	if st.Path != "/" {
+		t.Fatalf("expected path /, got %s", st.Path)
 	}
 
 	// top level kind should be KindStatus
