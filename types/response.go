@@ -161,3 +161,15 @@ type PriceHistoryItem struct {
 type PricesHistoryResponse struct {
 	History []PriceHistoryItem `json:"history"`
 }
+
+type TickSizeResponse struct {
+	MinimumTickSize decimal.Decimal `json:"minimum_tick_size"`
+}
+
+type NegRiskResponse struct {
+	NegRisk bool `json:"neg_risk"`
+}
+
+type FeeRateResponse struct {
+	BaseFee uint32 `json:"base_fee"`
+}

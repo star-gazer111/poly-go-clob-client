@@ -32,10 +32,23 @@ type SpreadRequest struct {
 	Side    *Side  `json:"side,omitempty"`
 }
 
+
 type PricesHistoryRequest struct {
 	Market   string   `json:"market"`
 	Interval Interval `json:"interval,omitempty"`
 	StartTs  *int64   `json:"startTs,omitempty"`
 	EndTs    *int64   `json:"endTs,omitempty"`
 	Fidelity *uint32  `json:"fidelity,omitempty"`
+}
+
+type FeeRateRequest struct {
+	TokenId string `json:"token_id"`
+}
+
+type TickSizeRequest struct {
+	TokenId string `json:"token_id"`
+}
+
+type NegRiskRequest struct {
+	TokenId string `json:"token_id"`
 }

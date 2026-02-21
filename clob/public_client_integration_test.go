@@ -808,3 +808,69 @@ func TestIntegration_GetPricesHistory(t *testing.T) {
 		}
 	}
 }
+
+func TestIntegration_GetFeeRateBps(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetFeeRateBps with token_id: %s", tokenID)
+
+	req := types.FeeRateRequest{TokenId: tokenID}
+	resp, err := c.GetFeeRateBps(ctx, req)
+	if err != nil {
+		t.Fatalf("GetFeeRateBps failed: %v", err)
+	}
+
+	t.Logf("Base Fee: %d", resp.BaseFee)
+}
+
+func TestIntegration_GetTickSize(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetTickSize with token_id: %s", tokenID)
+
+	req := types.TickSizeRequest{TokenId: tokenID}
+	resp, err := c.GetTickSize(ctx, req)
+	if err != nil {
+		t.Fatalf("GetTickSize failed: %v", err)
+	}
+
+	t.Logf("Minimum Tick Size: %v", resp.MinimumTickSize)
+}
+
+func TestIntegration_GetNegRisk(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetNegRisk with token_id: %s", tokenID)
+
+	req := types.NegRiskRequest{TokenId: tokenID}
+	resp, err := c.GetNegRisk(ctx, req)
+	if err != nil {
+		t.Fatalf("GetNegRisk failed: %v", err)
+	}
+
+	t.Logf("Neg Risk: %v", resp.NegRisk)
+}

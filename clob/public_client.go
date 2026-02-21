@@ -524,3 +524,60 @@ func (c *PublicClient) GetPricesHistory(ctx context.Context, req types.PricesHis
 
 	return resp, nil
 }
+
+func (c *PublicClient) GetFeeRateBps(ctx context.Context, req types.FeeRateRequest) (types.FeeRateResponse, error) {
+	q := url.Values{}
+	q.Add("token_id", req.TokenId)
+
+	u := c.endpointWithQuery("/fee-rate", q)
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return types.FeeRateResponse{}, err
+	}
+
+	var resp types.FeeRateResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return types.FeeRateResponse{}, err
+	}
+
+	return resp, nil
+}
+
+func (c *PublicClient) GetTickSize(ctx context.Context, req types.TickSizeRequest) (types.TickSizeResponse, error) {
+	q := url.Values{}
+	q.Add("token_id", req.TokenId)
+
+	u := c.endpointWithQuery("/tick-size", q)
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return types.TickSizeResponse{}, err
+	}
+
+	var resp types.TickSizeResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return types.TickSizeResponse{}, err
+	}
+
+	return resp, nil
+}
+
+func (c *PublicClient) GetNegRisk(ctx context.Context, req types.NegRiskRequest) (types.NegRiskResponse, error) {
+	q := url.Values{}
+	q.Add("token_id", req.TokenId)
+
+	u := c.endpointWithQuery("/neg-risk", q)
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return types.NegRiskResponse{}, err
+	}
+
+	var resp types.NegRiskResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return types.NegRiskResponse{}, err
+	}
+
+	return resp, nil
+}
