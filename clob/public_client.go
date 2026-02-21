@@ -529,10 +529,7 @@ func (c *PublicClient) GetFeeRateBps(ctx context.Context, req types.FeeRateReque
 	q := url.Values{}
 	q.Add("token_id", req.TokenId)
 
-	u := c.endpoint("/fee-rate")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/fee-rate", q)
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -551,10 +548,7 @@ func (c *PublicClient) GetTickSize(ctx context.Context, req types.TickSizeReques
 	q := url.Values{}
 	q.Add("token_id", req.TokenId)
 
-	u := c.endpoint("/tick-size")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/tick-size", q)
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
@@ -573,10 +567,7 @@ func (c *PublicClient) GetNegRisk(ctx context.Context, req types.NegRiskRequest)
 	q := url.Values{}
 	q.Add("token_id", req.TokenId)
 
-	u := c.endpoint("/neg-risk")
-	if len(q) > 0 {
-		u = u + "?" + q.Encode()
-	}
+	u := c.endpointWithQuery("/neg-risk", q)
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
