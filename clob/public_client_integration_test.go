@@ -65,7 +65,6 @@ func TestIntegration_Markets(t *testing.T) {
 	defer cancel()
 
 	resp, err := c.Markets(ctx, "")
-	fmt.Println(resp)
 	if err != nil {
 		t.Fatalf("Markets failed: %v", err)
 	}
