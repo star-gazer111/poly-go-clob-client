@@ -189,3 +189,19 @@ func (c *PublicClient) OrderBooks(ctx context.Context, req []types.OrderBookSumm
 
 	return resp, nil
 }
+
+func (c *PublicClient) GetMarket(ctx context.Context, req *types.MarketRequest) (*types.MarketResponse, error) {
+	u := c.endpoint(fmt.Sprintf("/markets/%s", req.ConditionID))
+
+	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.MarketResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
