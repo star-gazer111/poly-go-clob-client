@@ -189,7 +189,7 @@ func (c *PublicClient) GetLastTradePrice(ctx context.Context, req *types.LastTra
 	return &resp, nil
 }
 
-func (c *PublicClient) GetLastTradesPrices(ctx context.Context, req []types.LastTradePriceRequest) ([]*types.LastTradePriceResponse, error) {
+func (c *PublicClient) GetLastTradesPrices(ctx context.Context, req []types.LastTradePriceRequest) ([]types.LastTradePriceResponse, error) {
 	u := c.endpoint("/last-trades-prices")
 
 	body, err := json.Marshal(req)
@@ -202,7 +202,7 @@ func (c *PublicClient) GetLastTradesPrices(ctx context.Context, req []types.Last
 		return nil, err
 	}
 
-	var resp []*types.LastTradePriceResponse
+	var resp []types.LastTradePriceResponse
 	if err := json.Unmarshal(b, &resp); err != nil {
 		return nil, err
 	}
