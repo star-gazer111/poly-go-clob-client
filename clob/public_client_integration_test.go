@@ -418,8 +418,8 @@ func TestIntegration_GetLastTradePrice(t *testing.T) {
 
 	t.Logf("GetLastTradePrice response: Price=%s, Side=%v", resp.Price, resp.Side)
 
-	if resp.Price.String() == "" {
-		t.Error("Expected price to be present")
+	if !resp.Price.IsPositive() {
+		t.Errorf("Expected price to be positive, got %s", resp.Price.String())
 	}
 
 	if resp.Side != "BUY" && resp.Side != "SELL" {
@@ -457,8 +457,8 @@ func TestIntegration_GetLastTradesPrices(t *testing.T) {
 
 	t.Logf("GetLastTradesPrices response: %+v", resp[0])
 
-	if resp[0].Price.String() == "" {
-		t.Error("Expected price to be present")
+	if !resp[0].Price.IsPositive() {
+		t.Errorf("Expected price to be positive, got %s", resp[0].Price.String())
 	}
 }
 
