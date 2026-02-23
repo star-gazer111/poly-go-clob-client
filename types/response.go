@@ -119,8 +119,8 @@ type OrderBookSummaryResponse struct {
 }
 
 type LastTradePriceResponse struct {
-	Price json.Number `json:"price"`
-	Side  string      `json:"side,omitempty"`
+	Price decimal.Decimal `json:"price"`
+	Side  string          `json:"side,omitempty"`
 }
 
 type TradeEvent struct {
