@@ -309,10 +309,10 @@ func (c *PublicClient) GetServerTime(ctx context.Context) (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	var resp types.ServerTimeResponse
-	if err := json.Unmarshal(b, &resp); err != nil {
+	var ts int64
+	if err := json.Unmarshal(b, &ts); err != nil {
 		return time.Time{}, err
 	}
 
-	return resp.ToTime()
+	return time.Unix(ts, 0).UTC(), nil
 }

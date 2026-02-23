@@ -117,23 +117,3 @@ type OrderBookSummaryResponse struct {
 	TickSize       json.Number     `json:"tick_size"`
 	LastTradePrice *json.Number    `json:"last_trade_price,omitempty"`
 }
-
-// ServerTimeResponse represents the response from the server time endpoint.
-type ServerTimeResponse struct {
-	serverTime int64
-}
-
-// UnmarshalJSON implements custom unmarshaling for ServerTimeResponse
-func (s *ServerTimeResponse) UnmarshalJSON(data []byte) error {
-	var timestamp int64
-	if err := json.Unmarshal(data, &timestamp); err != nil {
-		return err
-	}
-	s.serverTime = timestamp
-	return nil
-}
-
-// ToTime converts the server time string to a time.Time object.
-func (s *ServerTimeResponse) ToTime() (time.Time, error) {
-	return time.Unix(s.serverTime, 0), nil
-}
