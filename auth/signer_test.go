@@ -1,6 +1,12 @@
 package auth
 
-import "testing"
+import (
+	"context"
+	"testing"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+)
 
 func TestAPICredsStringIsRedacted(t *testing.T) {
 	c := APICreds{
@@ -30,4 +36,63 @@ func stringIndex(s, sub string) int {
 		}
 	}
 	return -1
+}
+
+func TestNewPrivateKeySignerFromHex(t *testing.T) {
+	signer, err := NewPrivateKeySignerFromHex("0x4c0883a6910395b37d6231471b5dbb6204fe512961708279f0a4d1d6510c2c9c")
+	if err != nil {
+		t.Fatalf("NewPrivateKeySignerFromHex() error = %v", err)
+	}
+
+	if signer.Address().Hex() == "" {
+		t.Fatal("expected signer address to be set")
+	}
+}
+
+func TestPrivateKeySignerSignTypedData(t *testing.T) {
+	signer, err := NewPrivateKeySignerFromHex("0x4c0883a6910395b37d6231471b5dbb6204fe512961708279f0a4d1d6510c2c9c")
+	if err != nil {
+		t.Fatalf("NewPrivateKeySignerFromHex() error = %v", err)
+	}
+
+	td := apitypes.TypedData{
+		Types: apitypes.Types{
+			"EIP712Domain": {
+				{Name: "name", Type: "string"},
+			},
+			"Mail": {
+				{Name: "contents", Type: "string"},
+			},
+		},
+		PrimaryType: "Mail",
+		Domain: apitypes.TypedDataDomain{
+			Name: "example",
+		},
+		Message: apitypes.TypedDataMessage{
+			"contents": "hello",
+		},
+	}
+
+	sig, err := signer.SignTypedData(context.Background(), td)
+	if err != nil {
+		t.Fatalf("SignTypedData() error = %v", err)
+	}
+	if len(sig) != 65 {
+		t.Fatalf("unexpected signature length: got %d", len(sig))
+	}
+
+	hash, _, err := apitypes.TypedDataAndHash(td)
+	if err != nil {
+		t.Fatalf("TypedDataAndHash() error = %v", err)
+	}
+
+	pub, err := crypto.SigToPub(hash, sig)
+	if err != nil {
+		t.Fatalf("SigToPub() error = %v", err)
+	}
+
+	recovered := crypto.PubkeyToAddress(*pub)
+	if recovered != signer.Address() {
+		t.Fatalf("unexpected recovered address: got %s want %s", recovered.Hex(), signer.Address().Hex())
+	}
 }
