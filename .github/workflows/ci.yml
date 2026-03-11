@@ -17,7 +17,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.25.8"
           cache: true
 
       - name: Check gofmt
@@ -37,7 +37,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.25.8"
           cache: true
 
       - name: Check module tidiness
@@ -53,7 +53,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.25.8"
           cache: true
 
       - name: Build
@@ -67,7 +67,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.25.8"
           cache: true
 
       - name: Test
@@ -84,7 +84,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.25.8"
           cache: true
 
       - name: Integration Test
@@ -98,7 +98,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.25.8"
           cache: true
 
       - name: golangci-lint
@@ -116,7 +116,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.25.8"
           cache: true
 
       - name: govulncheck
