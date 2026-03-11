@@ -6,12 +6,14 @@ import (
 
 type L1Client struct {
 	*PublicClient
-	signer auth.Signer
+	chainID uint64
+	signer  auth.Signer
 }
 
-func NewL1Client(baseURL string, signer auth.Signer, opts ...PublicClientOption) *L1Client {
+func NewL1Client(baseURL string, chainID uint64, signer auth.Signer, opts ...PublicClientOption) *L1Client {
 	return &L1Client{
 		PublicClient: NewPublicClient(baseURL, opts...),
+		chainID:      chainID,
 		signer:       signer,
 	}
 }
