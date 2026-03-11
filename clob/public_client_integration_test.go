@@ -391,3 +391,33 @@ func TestIntegration_AllEndpointsReachable(t *testing.T) {
 		})
 	}
 }
+// TestIntegration_GetServerTime tests the /time endpoint against the live API.
+func TestIntegration_GetServerTime(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	serverTime, err := c.GetServerTime(ctx)
+	if err != nil {
+		t.Fatalf("GetServerTime failed: %v", err)
+	}
+
+	t.Logf("Server time: %v", serverTime)
+
+	if serverTime.IsZero() {
+		t.Fatal("expected non-zero server time")
+	}
+
+	// Basic sanity check: server time should be relatively close to now (e.g. within 1 minute)
+	// allowing for some clock skew and latency.
+	now := time.Now()
+	diff := now.Sub(serverTime)
+	if diff < 0 {
+		diff = -diff
+	}
+
+	if diff > time.Minute {
+		t.Logf("Warning: server time %v differs from local time %v by %v", serverTime, now, diff)
+	}
+}

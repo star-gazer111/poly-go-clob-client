@@ -3,6 +3,7 @@ package clob
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -94,5 +95,58 @@ func TestPublicClient_Ping_Non2xx_ReturnsTypedError(t *testing.T) {
 	}
 	if top.Kind() != types.KindStatus {
 		t.Fatalf("expected kind %s, got %s", types.KindStatus, top.Kind())
+	}
+}
+
+func TestPublicClient_GetOK(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			t.Fatalf("expected /, got %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		_, _ = w.Write([]byte(`{"ok":true,"message":"pong"}`))
+	}))
+	defer srv.Close()
+
+	c, err := NewPublicClient(srv.URL)
+	if err != nil {
+		t.Fatalf("NewPublicClient err: %v", err)
+	}
+
+	ok, err := c.GetOK(context.Background())
+	if err != nil {
+		t.Fatalf("GetOK err: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected OK to be true")
+	}
+}
+
+func TestPublicClient_GetServerTime(t *testing.T) {
+	ts := int64(1698400800)
+	expectedTime := time.Unix(ts, 0)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/time" {
+			t.Fatalf("expected /time, got %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		_, _ = w.Write([]byte(fmt.Sprintf("%d", ts)))
+	}))
+	defer srv.Close()
+
+	c, err := NewPublicClient(srv.URL)
+	if err != nil {
+		t.Fatalf("NewPublicClient err: %v", err)
+	}
+
+	gotTime, err := c.GetServerTime(context.Background())
+	if err != nil {
+		t.Fatalf("GetServerTime err: %v", err)
+	}
+	if !gotTime.Equal(expectedTime) {
+		t.Fatalf("expected %v, got %v", expectedTime, gotTime)
 	}
 }
