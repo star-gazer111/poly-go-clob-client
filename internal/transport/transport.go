@@ -57,6 +57,8 @@ func (t *Transport) Do(ctx context.Context, req *http.Request) (*http.Response, 
 		req.Header.Set("User-Agent", t.policy.UserAgent)
 	}
 
+	// #nosec G704 -- req.URL is built from validated base URLs in client constructors
+	// plus fixed endpoint paths; this transport is a shared wrapper, not a user-input URL sink.
 	resp, err := t.hc.Do(req)
 	if err != nil {
 		cancel()

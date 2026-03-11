@@ -117,3 +117,30 @@ type OrderBookSummaryResponse struct {
 	TickSize       json.Number     `json:"tick_size"`
 	LastTradePrice *json.Number    `json:"last_trade_price,omitempty"`
 }
+
+type LastTradePriceResponse struct {
+	Price decimal.Decimal `json:"price"`
+	Side  string          `json:"side,omitempty"`
+}
+
+type MarketTradeEvent struct {
+	ProxyWallet           string          `json:"proxyWallet"`
+	Side                  string          `json:"side"`
+	Asset                 string          `json:"asset"`
+	ConditionID           string          `json:"conditionId"`
+	Size                  decimal.Decimal `json:"size"`
+	Price                 decimal.Decimal `json:"price"`
+	Timestamp             int64           `json:"timestamp"`
+	Title                 string          `json:"title"`
+	Slug                  string          `json:"slug"`
+	Icon                  string          `json:"icon"`
+	EventSlug             string          `json:"eventSlug"`
+	Outcome               string          `json:"outcome"`
+	OutcomeIndex          int             `json:"outcomeIndex"`
+	Name                  string          `json:"name"`
+	Pseudonym             string          `json:"pseudonym"`
+	Bio                   string          `json:"bio"`
+	ProfileImage          string          `json:"profileImage"`
+	ProfileImageOptimized string          `json:"profileImageOptimized"`
+	TransactionHash       string          `json:"transactionHash"`
+}

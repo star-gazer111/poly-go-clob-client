@@ -391,3 +391,121 @@ func TestIntegration_AllEndpointsReachable(t *testing.T) {
 		})
 	}
 }
+
+// TestIntegration_GetLastTradePrice tests the /last-trade-price endpoint.
+func TestIntegration_GetLastTradePrice(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	// Fetch token_id from Gamma API
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetLastTradePrice with token_id: %s", tokenID)
+
+	req := &types.LastTradePriceRequest{
+		TokenId: tokenID,
+	}
+
+	resp, err := c.GetLastTradePrice(ctx, req)
+	if err != nil {
+		t.Fatalf("GetLastTradePrice failed: %v", err)
+	}
+
+	t.Logf("GetLastTradePrice response: Price=%s, Side=%v", resp.Price, resp.Side)
+
+	if !resp.Price.IsPositive() {
+		t.Errorf("Expected price to be positive, got %s", resp.Price.String())
+	}
+
+	if resp.Side != "BUY" && resp.Side != "SELL" {
+		t.Errorf("Expected Side to be 'BUY' or 'SELL', got '%s'", resp.Side)
+	}
+}
+
+// TestIntegration_GetLastTradesPrices tests the /last-trades-prices endpoint.
+func TestIntegration_GetLastTradesPrices(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	// Fetch token_id from Gamma API
+	tokenID, err := fetchTokenIDFromGamma(ctx)
+	if err != nil {
+		t.Skipf("Could not fetch token_id from Gamma API: %v", err)
+	}
+
+	t.Logf("Testing GetLastTradesPrices with token_id: %s", tokenID)
+
+	req := []types.LastTradePriceRequest{
+		{TokenId: tokenID},
+	}
+
+	resp, err := c.GetLastTradesPrices(ctx, req)
+	if err != nil {
+		t.Fatalf("GetLastTradesPrices failed: %v", err)
+	}
+
+	if len(resp) == 0 {
+		t.Fatal("Expected at least one response")
+	}
+
+	t.Logf("GetLastTradesPrices response: %+v", resp[0])
+
+	if !resp[0].Price.IsPositive() {
+		t.Errorf("Expected price to be positive, got %s", resp[0].Price.String())
+	}
+}
+
+// TestIntegration_GetMarketTradesEvents tests the Data API /trades endpoint for a market.
+func TestIntegration_GetMarketTradesEvents(t *testing.T) {
+	c := getTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	markets, err := c.Markets(ctx, "")
+	if err != nil {
+		t.Fatalf("Markets failed: %v", err)
+	}
+	if len(markets.Data) == 0 {
+		t.Skip("No markets available to test GetMarketTradesEvents")
+	}
+
+	foundAny := false
+	for _, m := range markets.Data {
+		if m.ConditionID == nil || *m.ConditionID == "" {
+			continue
+		}
+
+		req := &types.GetMarketTradesEventsRequest{
+			ConditionID: *m.ConditionID,
+			Limit:       1,
+		}
+
+		resp, err := c.GetMarketTradesEvents(ctx, req)
+		if err != nil {
+			t.Fatalf("GetMarketTradesEvents failed for %s: %v", *m.ConditionID, err)
+		}
+
+		if len(resp) == 0 {
+			continue
+		}
+
+		foundAny = true
+		t.Logf("GetMarketTradesEvents response for %s: count=%d first=%+v", *m.ConditionID, len(resp), resp[0])
+		if resp[0].ConditionID == "" {
+			t.Fatal("Expected conditionId in trade response")
+		}
+		break
+	}
+
+	if !foundAny {
+		t.Skip("No recent trades found for sampled markets")
+	}
+}
