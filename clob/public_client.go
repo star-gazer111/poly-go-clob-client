@@ -14,6 +14,8 @@ import (
 
 type PublicClient struct {
 	baseURL      *url.URL
+	dataAPIURL   *url.URL
+	dataAPIBase  string
 	transport    *transport.Transport
 	requireHTTPS bool
 }
@@ -46,6 +48,14 @@ func WithRequireHTTPS(require bool) PublicClientOption {
 	}
 }
 
+// WithDataAPIURL overrides the Data API base URL used by endpoints backed by
+// https://data-api.polymarket.com.
+func WithDataAPIURL(baseURL string) PublicClientOption {
+	return func(c *PublicClient) {
+		c.dataAPIBase = strings.TrimSpace(baseURL)
+	}
+}
+
 // NewPublicClient constructs a public-only client
 //
 // - baseURL must be a valid URL (non-empty)
@@ -53,6 +63,7 @@ func WithRequireHTTPS(require bool) PublicClientOption {
 func NewPublicClient(baseURL string, opts ...PublicClientOption) (*PublicClient, error) {
 	c := &PublicClient{
 		transport:    transport.NewTransport(http.DefaultClient, transport.DefaultPolicy()),
+		dataAPIURL:   mustDefaultURL("https://data-api.polymarket.com"),
 		requireHTTPS: false,
 	}
 
@@ -65,7 +76,23 @@ func NewPublicClient(baseURL string, opts ...PublicClientOption) (*PublicClient,
 		return nil, err
 	}
 	c.baseURL = u
+
+	if c.dataAPIBase != "" {
+		c.dataAPIURL, err = validateBaseURL(c.dataAPIBase, c.requireHTTPS)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return c, nil
+}
+
+func mustDefaultURL(raw string) *url.URL {
+	u, err := url.Parse(raw)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }
 
 func validateBaseURL(baseURL string, requireHTTPS bool) (*url.URL, error) {
@@ -101,12 +128,20 @@ func validateBaseURL(baseURL string, requireHTTPS bool) (*url.URL, error) {
 }
 
 func (c *PublicClient) endpoint(path string) string {
+	return endpointFor(c.baseURL, path)
+}
+
+func (c *PublicClient) dataEndpoint(path string) string {
+	return endpointFor(c.dataAPIURL, path)
+}
+
+func endpointFor(baseURL *url.URL, path string) string {
 	// path should start with "/" for correctness
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
 	// preserve baseURL path prefix if present
-	base := *c.baseURL
+	base := *baseURL
 	base.Path = strings.TrimRight(base.Path, "/") + path
 	return base.String()
 }
@@ -210,26 +245,38 @@ func (c *PublicClient) GetLastTradesPrices(ctx context.Context, req []types.Last
 	return resp, nil
 }
 
-func (c *PublicClient) GetMarketTradesEvents(ctx context.Context, req *types.GetMarketTradesEventsRequest) (*types.MarketTradesEventsResponse, error) {
-	u := c.endpoint("/events/trade")
+func (c *PublicClient) GetMarketTradesEvents(ctx context.Context, req *types.GetMarketTradesEventsRequest) ([]types.MarketTradeEvent, error) {
 	q := url.Values{}
-	q.Add("condition_id", req.ConditionID)
-	if req.NextCursor != "" {
-		q.Add("next_cursor", req.NextCursor)
+	q.Add("market", req.ConditionID)
+	if req.Limit > 0 {
+		q.Add("limit", fmt.Sprintf("%d", req.Limit))
 	}
-	u = u + "?" + q.Encode()
+	if req.Offset > 0 {
+		q.Add("offset", fmt.Sprintf("%d", req.Offset))
+	}
+	if req.TakerOnly != nil {
+		q.Add("takerOnly", fmt.Sprintf("%t", *req.TakerOnly))
+	}
+	if req.Side != "" {
+		q.Add("side", req.Side)
+	}
+
+	u := c.dataEndpoint("/trades")
+	if len(q) > 0 {
+		u = u + "?" + q.Encode()
+	}
 
 	b, err := c.transport.DoJSON(ctx, http.MethodGet, u, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp types.MarketTradesEventsResponse
+	var resp []types.MarketTradeEvent
 	if err := json.Unmarshal(b, &resp); err != nil {
 		return nil, err
 	}
 
-	return &resp, nil
+	return resp, nil
 }
 
 func (c *PublicClient) OrderBooks(ctx context.Context, req []types.OrderBookSummaryRequest) ([]*types.OrderBookSummaryResponse, error) {

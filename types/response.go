@@ -123,15 +123,24 @@ type LastTradePriceResponse struct {
 	Side  string          `json:"side,omitempty"`
 }
 
-type TradeEvent struct {
-	AssetID   string      `json:"asset_id"`
-	Price     json.Number `json:"price"`
-	Size      json.Number `json:"size"`
-	Side      string      `json:"side"`
-	Timestamp json.Number `json:"timestamp"`
-}
-
-type MarketTradesEventsResponse struct {
-	Data       []TradeEvent `json:"data"`
-	NextCursor string       `json:"next_cursor"`
+type MarketTradeEvent struct {
+	ProxyWallet           string          `json:"proxyWallet"`
+	Side                  string          `json:"side"`
+	Asset                 string          `json:"asset"`
+	ConditionID           string          `json:"conditionId"`
+	Size                  decimal.Decimal `json:"size"`
+	Price                 decimal.Decimal `json:"price"`
+	Timestamp             int64           `json:"timestamp"`
+	Title                 string          `json:"title"`
+	Slug                  string          `json:"slug"`
+	Icon                  string          `json:"icon"`
+	EventSlug             string          `json:"eventSlug"`
+	Outcome               string          `json:"outcome"`
+	OutcomeIndex          int             `json:"outcomeIndex"`
+	Name                  string          `json:"name"`
+	Pseudonym             string          `json:"pseudonym"`
+	Bio                   string          `json:"bio"`
+	ProfileImage          string          `json:"profileImage"`
+	ProfileImageOptimized string          `json:"profileImageOptimized"`
+	TransactionHash       string          `json:"transactionHash"`
 }

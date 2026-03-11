@@ -16,5 +16,8 @@ type LastTradePriceRequest struct {
 
 type GetMarketTradesEventsRequest struct {
 	ConditionID string `json:"condition_id"`
-	NextCursor  string `json:"next_cursor,omitempty"`
+	Limit       int    `json:"limit,omitempty"`
+	Offset      int    `json:"offset,omitempty"`
+	TakerOnly   *bool  `json:"taker_only,omitempty"`
+	Side        string `json:"side,omitempty"`
 }
