@@ -9,11 +9,18 @@ race:
 lint:
 	golangci-lint run ./...
 
-vuln:
-	govulncheck ./...
+tidy:
+	go mod tidy
 
-sec:
-	gosec ./...
+fmt:
+	gofmt -s -w .
 
 tidy:
 	go mod tidy
+
+security:
+	govulncheck ./...
+	gosec ./...
+
+check: fmt tidy lint test
+

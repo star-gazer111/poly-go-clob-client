@@ -32,8 +32,8 @@ func TestNewPublicClient_BaseURLValidation(t *testing.T) {
 
 func TestPublicClient_Ping_OK_JSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/ping" {
-			t.Fatalf("expected /ping, got %s", r.URL.Path)
+		if r.URL.Path != "/" {
+			t.Fatalf("expected /, got %s", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
@@ -83,8 +83,8 @@ func TestPublicClient_Ping_Non2xx_ReturnsTypedError(t *testing.T) {
 	if st.StatusCode != 429 {
 		t.Fatalf("expected 429, got %d", st.StatusCode)
 	}
-	if st.Path != "/ping" {
-		t.Fatalf("expected path /ping, got %s", st.Path)
+	if st.Path != "/" {
+		t.Fatalf("expected path /, got %s", st.Path)
 	}
 
 	// top level kind should be KindStatus
