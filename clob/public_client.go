@@ -289,25 +289,3 @@ func (c *PublicClient) SamplingSimplifiedMarkets(ctx context.Context, nextCursor
 
 	return &resp, nil
 }
-
-// ping calls a simple public endpoint (e.g. /ping) and returns a parsed response
-// if the server returns JSON we parse it otherwise we return raw string
-//
-// this is meant as a boring smoke-test endpoint for transport + error typing
-func (c *PublicClient) Ping(ctx context.Context) (*PingResponse, error) {
-	b, err := c.transport.DoJSON(ctx, http.MethodGet, c.endpoint("/ping"), nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := &PingResponse{}
-	// try JSON first
-	if json.Unmarshal(b, resp) == nil {
-		return resp, nil
-	}
-
-	// fallback: treat as plain text
-	resp.Raw = strings.TrimSpace(string(b))
-	resp.OK = resp.Raw != ""
-	return resp, nil
-}
